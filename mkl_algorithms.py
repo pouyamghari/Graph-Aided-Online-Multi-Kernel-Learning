@@ -123,7 +123,7 @@ class Raker:
         b, n_components = X_features.shape
         l = np.zeros((1,b))
         for j in range(0,b):
-            theta[:,j] = theta[:,j] - self.eta*( (2*(f_RF_p[j,0] - Y)*np.transpose(X_features[j,:]))                                                     +2*self.lam*theta[:,j] )
+            theta[:,j] = theta[:,j] - self.eta*( (2*(f_RF_p[j,0] - Y)*np.transpose(X_features[j,:]))+2*self.lam*theta[:,j] )
             l[0,j] = (f_RF_p[j,0]-Y)**2+self.lam*(LA.norm(theta[:,j])**2)
             w[0,j] = w[0,j]*np.exp(-self.eta*l[0,j])
         return w, theta
