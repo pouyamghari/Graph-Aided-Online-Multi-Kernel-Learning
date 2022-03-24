@@ -374,7 +374,7 @@ class OMKLSFG:
                 l[0,j] = ( (f_RF_p[j,0]-Y)**2+self.lam*(LA.norm(theta[:,j])**2) )/.1
             w[0,j] *= np.exp(-eta*l[0,j])
         w_n/=np.sum(w_n)
-        fin_loss = (f_RF-Y)**2 #+ self.lam*(LA.norm(w_n.dot(np.transpose(theta)))**2)
+        fin_loss = (f_RF-Y)**2
         if p[0,s_n]<.2:
             u[0,s_n] *= np.exp(-eta*5*fin_loss)
         else:
