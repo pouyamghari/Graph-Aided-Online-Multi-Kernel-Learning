@@ -1,12 +1,11 @@
 import numpy as np
 from numpy import linalg as LA
 
-
-
 class OMKR:
-    def __init__(self, eta, gamma):
+    def __init__(self, eta, gamma, kernel_list):
         self.eta = eta
         self.gamma = np.array(gamma)
+        self.kernel_list = kernel_list
         
     def predict(self, X, w, theta):
         M, N = X.shape
@@ -14,8 +13,12 @@ class OMKR:
         f_RF_p = np.zeros((b,1))
         for j in range(0,self.gamma.shape[0]):
             if M > 1:
-                for k in range(0,M-1):
-                    f_RF_p[j,0] = f_RF_p[j,0] + theta[j,k+1]*np.exp(-(LA.norm(X[M-1,:]-X[k,:])**2)/self.gamma[j])
+                if self.kernel_list[j] == 'Gaussian':
+                    for k in range(0,M-1):
+                        f_RF_p[j,0] = f_RF_p[j,0] + theta[j,k+1]*np.exp(-(LA.norm(X[M-1,:]-X[k,:])**2)/self.gamma[j])
+                elif self.kernel_list[j] == 'Laplacian':
+                    for k in range(0,M-1):
+                        f_RF_p[j,0] = f_RF_p[j,0] + theta[j,k+1]*np.exp(-(LA.norm((X[M-1,:]-X[k,:]), ord=1))/self.gamma[j])
         w_bar = w/np.sum(w)
         f_RF = w_bar.dot(f_RF_p)
         return f_RF, f_RF_p
@@ -123,7 +126,7 @@ class Raker:
         b, n_components = X_features.shape
         l = np.zeros((1,b))
         for j in range(0,b):
-            theta[:,j] = theta[:,j] - self.eta*( (2*(f_RF_p[j,0] - Y)*np.transpose(X_features[j,:]))+2*self.lam*theta[:,j] )
+            theta[:,j] = theta[:,j] - self.eta*( (2*(f_RF_p[j,0] - Y)*np.transpose(X_features[j,:]))                                                     +2*self.lam*theta[:,j] )
             l[0,j] = (f_RF_p[j,0]-Y)**2+self.lam*(LA.norm(theta[:,j])**2)
             w[0,j] = w[0,j]*np.exp(-self.eta*l[0,j])
         return w, theta
@@ -360,7 +363,9 @@ class OMKLSFG:
     def update(self, f_RF, f_RF_p, Y, theta, w, u, X_features, n_n, s_n, p, q, eta):
         c, n_components = X_features.shape
         l = np.zeros((1,c))
+        w_n = np.zeros((1,self.gamma.shape[0]))
         for j in n_n:
+            w_n[0,j] = w[0,j]
             if q[0,j]>.1:
                 theta[:,j] -=  eta*( (2*(f_RF_p[j,0] - Y)*np.transpose(X_features[j,:]))+2*self.lam*theta[:,j] )/q[0,j]
                 l[0,j] = ( (f_RF_p[j,0]-Y)**2+self.lam*(LA.norm(theta[:,j])**2) )/q[0,j]
@@ -368,8 +373,10 @@ class OMKLSFG:
                 theta[:,j] -=  eta*( (2*(f_RF_p[j,0] - Y)*np.transpose(X_features[j,:]))+2*self.lam*theta[:,j] )/.1
                 l[0,j] = ( (f_RF_p[j,0]-Y)**2+self.lam*(LA.norm(theta[:,j])**2) )/.1
             w[0,j] *= np.exp(-eta*l[0,j])
+        w_n/=np.sum(w_n)
+        fin_loss = (f_RF-Y)**2 #+ self.lam*(LA.norm(w_n.dot(np.transpose(theta)))**2)
         if p[0,s_n]<.2:
-            u[0,s_n] *= np.exp(-eta*5*f_RF)
+            u[0,s_n] *= np.exp(-eta*5*fin_loss)
         else:
-            u[0,s_n] *= np.exp(-eta*(f_RF/p[0,s_n]))
+            u[0,s_n] *= np.exp(-eta*(fin_loss/p[0,s_n]))
         return w, u, theta

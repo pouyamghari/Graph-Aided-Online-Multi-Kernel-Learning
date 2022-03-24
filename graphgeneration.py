@@ -1,14 +1,17 @@
 import numpy as np
 import math
+import kernel_distance
+from kernel_distance import kernel_distance
 
-def graphgeneration(gamma, m):
+def graphgeneration(gamma, kernel_list, m):
     KL = np.zeros((gamma.shape[0],gamma.shape[0]))
     gamma_ind = []
     n_ind = []
     for i in range(0,gamma.shape[0]):
         for j in range(0,gamma.shape[0]):
-            KL[i,j] = np.sqrt(math.pi)*( gamma[i]+gamma[j] \
-                                            - ((2*np.sqrt(2)*gamma[i]*gamma[j])/np.sqrt(gamma[i]**2 + gamma[j]**2)) )
+            KL[i,j] = kernel_distance(gamma[i], gamma[j], kernel_list[i], kernel_list[j])
+            #KL[i,j] = np.sqrt(math.pi)*( gamma[i]+gamma[j] \
+                                            #- ((2*np.sqrt(2)*gamma[i]*gamma[j])/np.sqrt(gamma[i]**2 + gamma[j]**2)) )
     ind_KL = np.zeros((gamma.shape[0],gamma.shape[0]))
     A_t = np.zeros((gamma.shape[0],gamma.shape[0]))
     for i in range(0,gamma.shape[0]):
